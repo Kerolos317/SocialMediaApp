@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.emailEvent = void 0;
+const node_events_1 = require("node:events");
+const send_email_js_1 = require("../email/send.email.js");
+const verfiy_email_templates_js_1 = require("../email/templates/verfiy.email.templates.js");
+exports.emailEvent = new node_events_1.EventEmitter();
+exports.emailEvent.on("confirmEmail", async (data) => {
+    await (0, send_email_js_1.sendEmail)({ to: data.to, subject: data.subject || "Confirm-Email", html: (0, verfiy_email_templates_js_1.verifyEmailTemplate)({ otp: data.otp }) }).catch(error => {
+        console.log(`Fail to send email to ${data.otp}`);
+    });
+});
