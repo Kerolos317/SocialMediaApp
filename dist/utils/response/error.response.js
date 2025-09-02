@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.globalErrorHandling = exports.NotFoundException = exports.BadRequestException = exports.ApplicationException = void 0;
+exports.globalErrorHandling = exports.ForbiddenException = exports.UnauthorizedException = exports.ConflictException = exports.NotFoundException = exports.BadRequestException = exports.ApplicationException = void 0;
 class ApplicationException extends Error {
     statusCode;
     constructor(message, statusCode = 400, cause) {
@@ -27,6 +27,30 @@ class NotFoundException extends ApplicationException {
     }
 }
 exports.NotFoundException = NotFoundException;
+class ConflictException extends ApplicationException {
+    constructor(message, cause) {
+        super(message, 409, cause);
+        this.name = this.constructor.name;
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+exports.ConflictException = ConflictException;
+class UnauthorizedException extends ApplicationException {
+    constructor(message, cause) {
+        super(message, 401, cause);
+        this.name = this.constructor.name;
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+exports.UnauthorizedException = UnauthorizedException;
+class ForbiddenException extends ApplicationException {
+    constructor(message, cause) {
+        super(message, 403, cause);
+        this.name = this.constructor.name;
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+exports.ForbiddenException = ForbiddenException;
 const globalErrorHandling = (error, req, res, next) => {
     return res.status(error.statusCode || 500).json({ err_message: error.message || "something went wrong", stack: process.env.MOOD === "development" ? error.stack : undefined, cause: error.cause, error });
 };

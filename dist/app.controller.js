@@ -13,6 +13,7 @@ const helmet_1 = __importDefault(require("helmet"));
 const express_rate_limit_1 = require("express-rate-limit");
 const auth_controller_1 = __importDefault(require("./modules/auth/auth.controller"));
 const error_response_1 = require("./utils/response/error.response");
+const user_controller_1 = __importDefault(require("./modules/user/user.controller"));
 const bootstrap = async () => {
     const app = (0, express_1.default)();
     const port = process.env.PORT || 5000;
@@ -28,6 +29,7 @@ const bootstrap = async () => {
         res.json({ message: `welcome to ${process.env.APPLICATION_NAME} landing page` });
     });
     app.use("/auth", auth_controller_1.default);
+    app.use("/user", user_controller_1.default);
     app.use("{/*dummy}", (req, res) => {
         res.status(404).json({ message: "In-valid routing" });
     });

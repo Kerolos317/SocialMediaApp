@@ -23,7 +23,6 @@ async function sendEmail({ from = process.env.APP_EMAIL || "", to, cc, bcc, subj
             html,
             attachments,
         });
-        console.log("✅ Message sent:", info.messageId);
     }
     catch (error) {
         console.error("❌ Error sending email:", error);

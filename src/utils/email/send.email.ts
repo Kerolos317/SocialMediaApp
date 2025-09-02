@@ -38,7 +38,7 @@ export async function sendEmail({
       attachments,
     });
 
-    console.log("✅ Message sent:", info.messageId);
+    // console.log("✅ Message sent:", info.messageId);
   } catch (error) {
     console.error("❌ Error sending email:", error);
   }
