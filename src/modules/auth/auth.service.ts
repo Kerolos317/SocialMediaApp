@@ -202,7 +202,13 @@ class AuthenticationService {
         }
 
         const credentials = await createLoginCredentials(user);
-        console.log(credentials);
+        if (user.changeCredentialTime) {
+            await this.userModel.updateOne({
+                filter: { _id: user._id },
+                update: { $unset: { changeCredentialTime: 1 } },
+            });
+        }
+        // console.log(credentials);
 
         return res.status(201).json({
             message: "Done",

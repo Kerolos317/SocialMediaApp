@@ -3,11 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const token_security_1 = require("../../utils/security/token.security");
 const User_model_1 = require("../../DB/models/User.model");
 const user_repository_1 = require("../../DB/repository/user.repository");
-const token_repository_1 = require("../../DB/repository/token.repository");
-const Token_model_1 = require("../../DB/models/Token.model");
 class UserService {
     userModel = new user_repository_1.UserRepository(User_model_1.UserModel);
-    tokenModel = new token_repository_1.TokenRepository(Token_model_1.TokenModel);
     constructor() { }
     profile = async (req, res) => {
         return res.json({
@@ -15,6 +12,14 @@ class UserService {
             data: {
                 user: req.user?._id,
                 decoded: req.decoded?.iat,
+            },
+        });
+    };
+    profileImage = async (req, res) => {
+        return res.json({
+            message: "Done",
+            data: {
+                file: req.file
             },
         });
     };

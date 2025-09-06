@@ -150,7 +150,12 @@ class AuthenticationService {
             throw new error_response_1.ConflictException("Invalid email or password");
         }
         const credentials = await (0, token_security_1.createLoginCredentials)(user);
-        console.log(credentials);
+        if (user.changeCredentialTime) {
+            await this.userModel.updateOne({
+                filter: { _id: user._id },
+                update: { $unset: { changeCredentialTime: 1 } },
+            });
+        }
         return res.status(201).json({
             message: "Done",
             data: { credential: credentials },
