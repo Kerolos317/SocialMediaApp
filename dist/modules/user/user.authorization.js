@@ -3,5 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.endpoint = void 0;
 const User_model_1 = require("../../DB/models/User.model");
 exports.endpoint = {
-    profile: [User_model_1.RoleEnum.User]
+    profile: [User_model_1.RoleEnum.User, User_model_1.RoleEnum.Admin],
+    hardDelete: [User_model_1.RoleEnum.Admin]
 };

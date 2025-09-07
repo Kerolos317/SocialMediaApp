@@ -1,4 +1,4 @@
-import mongoose, {  HydratedDocument } from "mongoose";
+import mongoose, {  HydratedDocument, Types } from "mongoose";
 
 export enum GenderEnum {
   Male = "male",
@@ -30,12 +30,19 @@ export interface IUser  {
 
   phone?: string;
   address?: string;
+
   profileImage?: string;
+  tempProfileImage?: string;
   coverImages?: string[];
 
   gender: GenderEnum;
   role: RoleEnum;
   provider: ProviderEnum;
+
+  freezedAt?: Date;
+  freezedBy?: Types.ObjectId;
+  restoredAt?: Date;
+  restoredBy?: Types.ObjectId;
 
   createdAt: Date;
   updatedAt?: Date;
@@ -61,10 +68,18 @@ const userSchema = new mongoose.Schema<IUser>(
     address: {type:String},
 
     profileImage:{type:String},
+    tempProfileImage:{type:String},
     coverImages:{type:[String]},
+
+
     gender: {type:String , enum:GenderEnum, default:GenderEnum.Male},
     role: {type:String , enum:RoleEnum, default:RoleEnum.User},
     provider: {type:String , enum:ProviderEnum, default:ProviderEnum.SYSTEM},
+
+    freezedAt: {type:Date},
+    freezedBy: {type:mongoose.Schema.Types.ObjectId, ref:"User"},
+    restoredAt: {type:Date},
+    restoredBy: {type:mongoose.Schema.Types.ObjectId, ref:"User"},
 
   },
   {

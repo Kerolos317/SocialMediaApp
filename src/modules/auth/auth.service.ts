@@ -15,12 +15,14 @@ import {
     ConflictException,
     NotFoundException,
 } from "../../utils/response/error.response";
-import { emailEvent } from "../../utils/events/email.event";
+import { emailEvent } from "../../utils/email/email.event";
 import { UserRepository } from "../../DB/repository/user.repository";
 import { compareHash, generateHash } from "../../utils/security/hash.security";
 import { generateNumberOtp } from "../../utils/otp";
 import { createLoginCredentials } from "../../utils/security/token.security";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
+import { successResponse } from "../../utils/response/success.response";
+import { ILoginResponse } from "./auth.entities";
 
 class AuthenticationService {
     private userModel = new UserRepository(UserModel);
@@ -135,7 +137,7 @@ class AuthenticationService {
 
         emailEvent.emit("confirmEmail", { to: email, otp: otp });
 
-        return res.status(201).json({ message: "Done", data: user });
+        return successResponse({ res, statusCode: 201 });
     };
 
     confirmEmail = async (req: Request, res: Response): Promise<Response> => {
@@ -175,9 +177,7 @@ class AuthenticationService {
             throw new ApplicationException("Invalid or expired OTP", 400);
         }
 
-        return res
-            .status(200)
-            .json({ message: "Email confirmed successfully" });
+        return successResponse({ res });
     };
 
     login = async (req: Request, res: Response): Promise<Response> => {
@@ -210,10 +210,7 @@ class AuthenticationService {
         }
         // console.log(credentials);
 
-        return res.status(201).json({
-            message: "Done",
-            data: { credential: credentials },
-        });
+        return successResponse<ILoginResponse>({ res, data: { credentials } });
     };
 
     sendForgotCode = async (req: Request, res: Response): Promise<Response> => {
@@ -246,9 +243,7 @@ class AuthenticationService {
 
         emailEvent.emit("resetPassword", { to: email, otp: otp });
 
-        return res.status(201).json({
-            message: "Done",
-        });
+        return successResponse({ res });
     };
 
     verifyForgotPassword = async (
@@ -275,17 +270,14 @@ class AuthenticationService {
             throw new ConflictException("Invalid or expired OTP");
         }
 
-        return res.status(201).json({
-            message: "Done",
-        });
+        return successResponse({ res });
     };
 
     resetForgotPassword = async (
         req: Request,
         res: Response
     ): Promise<Response> => {
-        const { email, otp, password }: IResetForgotCodeBodyInputDTO =
-            req.body;
+        const { email, otp, password }: IResetForgotCodeBodyInputDTO = req.body;
 
         const user = await this.userModel.findOne({
             filter: {
@@ -318,9 +310,7 @@ class AuthenticationService {
             throw new BadRequestException("Fail reset account password");
         }
 
-        return res.status(201).json({
-            message: "Done",
-        });
+        return successResponse({ res });
     };
 }
 

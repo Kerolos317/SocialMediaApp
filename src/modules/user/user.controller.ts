@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authentication } from "../../middleware/authentication.middleware";
+import { authentication, authorization } from "../../middleware/authentication.middleware";
 import userService from "./user.service";
 import { validation } from "../../middleware/validation.middleware";
 import * as validators from "./user.validation";
@@ -9,19 +9,12 @@ import {
     fileValidation,
     StorageEnum,
 } from "../../utils/multer/cloud.multer";
+import { endpoint } from "./user.authorization";
 const router = Router();
 
 router.get("/", authentication(), userService.profile);
 
-router.patch(
-    "/profile-image",
-    authentication(),
-    cloudFileUpload({
-        validation: fileValidation.image,
-        storageApproach: StorageEnum.disk,
-    }).single("image"),
-    userService.profileImage
-);
+router.patch("/profile-image", authentication(), userService.profileImage);
 
 router.patch(
     "/profile-cover-image",
@@ -29,8 +22,21 @@ router.patch(
     cloudFileUpload({
         validation: fileValidation.image,
         storageApproach: StorageEnum.disk,
-    }).array("images" , 2),
+    }).array("images", 2),
     userService.profileCoverImage
+);
+
+router.delete(
+    "{/:userId}/freeze-account",
+    authentication(),
+    validation(validators.freezeAccount),
+    userService.freezeAccount
+);
+router.delete(
+    "/:userId",
+    authorization(endpoint.hardDelete),
+    validation(validators.hardDelete),
+    userService.hardDelete
 );
 
 router.post(

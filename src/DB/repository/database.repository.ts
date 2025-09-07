@@ -1,5 +1,6 @@
 import {
     CreateOptions,
+    DeleteResult,
     FlattenMaps,
     HydratedDocument,
     Model,
@@ -8,11 +9,12 @@ import {
     ProjectionType,
     QueryOptions,
     RootFilterQuery,
+    Types,
     UpdateQuery,
     UpdateWriteOpResult,
 } from "mongoose";
 
-export type Lean<T> = HydratedDocument<FlattenMaps<T>>
+export type Lean<T> = HydratedDocument<FlattenMaps<T>>;
 
 export abstract class DatabaseRepository<TDocument> {
     constructor(protected readonly model: Model<TDocument>) {}
@@ -25,11 +27,7 @@ export abstract class DatabaseRepository<TDocument> {
         filter?: RootFilterQuery<TDocument>;
         select?: ProjectionType<TDocument> | null;
         options?: QueryOptions<TDocument> | null;
-    }): Promise<
-        | Lean<TDocument>
-        | HydratedDocument<TDocument>
-        | null
-    > {
+    }): Promise<Lean<TDocument> | HydratedDocument<TDocument> | null> {
         const doc = this.model.findOne(filter).select(select || "");
         if (options?.populate) {
             doc.populate(options.populate as PopulateOptions[]);
@@ -59,6 +57,34 @@ export abstract class DatabaseRepository<TDocument> {
         update: UpdateQuery<TDocument>;
         options?: MongooseUpdateQueryOptions<TDocument> | null;
     }): Promise<UpdateWriteOpResult> {
-        return await this.model.updateOne(filter, { ...update, $inc: { __v: 1 } }, options);
+        return await this.model.updateOne(
+            filter,
+            { ...update, $inc: { __v: 1 } },
+            options
+        );
+    }
+
+    async deleteOne({
+        filter,
+    }: {
+        filter: RootFilterQuery<TDocument>;
+    }): Promise<DeleteResult> {
+        return await this.model.deleteOne(filter);
+    }
+
+    async findOneAndUpdate({
+        id,
+        update,
+        options = { new: true },
+    }: {
+        id: Types.ObjectId;
+        update: UpdateQuery<TDocument>;
+        options?: QueryOptions<TDocument> | null;
+    }): Promise<HydratedDocument<TDocument> | Lean<TDocument> | null> {
+        return await this.model.findOneAndUpdate(
+            id,
+            { ...update, $inc: { __v: 1 } },
+            options
+        );
     }
 }
