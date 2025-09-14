@@ -1,5 +1,16 @@
 import { Response, Request } from "express";
-import { ILogoutDTO } from "./user.dto";
+import { 
+    ILogoutDTO, 
+    IUpdatePasswordDTO, 
+    IUpdateEmailDTO, 
+    ISendEmailWithTagsDTO, 
+    IEnableTwoFactorDTO, 
+    IVerifyTwoFactorDTO, 
+    IDisableTwoFactorDTO 
+} from "./user.dto";
+import { compareHash, generateHash } from "../../utils/security/hash.security";
+import { nanoid } from "nanoid";
+import { emailEvent } from "../../utils/email/email.event";
 import {
     createLoginCredentials,
     createRevokeToken,
@@ -193,7 +204,7 @@ class UserService {
         req: Request,
         res: Response
     ): Promise<Response> => {
-        if (req.body?.password) {
+        if (req.body?.password || req.body?.email) {
             throw new BadRequestException("In-Valid Data");
         }
 
@@ -205,6 +216,219 @@ class UserService {
 
         if (user) return successResponse({ res, data: { user } });
         else throw new NotFoundException("user not found");
+    };
+
+    updatePassword = async (req: Request, res: Response): Promise<Response> => {
+        const { oldPassword, password, flag }: IUpdatePasswordDTO = req.body;
+        
+        if (!await compareHash(oldPassword, req.user?.password as string)) {
+            throw new BadRequestException("Invalid old password");
+        }
+
+        if (req.user?.oldPasswords?.length) {
+            for (const hashPassword of req.user.oldPasswords) {
+                if (await compareHash(password, hashPassword)) {
+                    throw new BadRequestException("This password was used before");
+                }
+            }
+        }
+
+        let updatedData: UpdateQuery<IUser> = {};
+        let statusCode = 200;
+
+        switch (flag) {
+            case "all":
+                updatedData.changeCredentialTime = new Date();
+                break;
+            case "only":
+                await createRevokeToken(req.decoded as any);
+                statusCode = 201;
+                break;
+        }
+
+        const user = await this.userModel.findOneAndUpdate({
+            id: req.decoded?._id,
+            update: {
+                password: await generateHash(password),
+                ...updatedData,
+                $push: { oldPasswords: req.user?.password }
+            },
+            options: { new: true }
+        });
+
+        if (!user) throw new NotFoundException("User not found");
+        
+        return res.status(statusCode).json({ message: "Password updated successfully" });
+    };
+
+    updateEmail = async (req: Request, res: Response): Promise<Response> => {
+        const { email, password }: IUpdateEmailDTO = req.body;
+        
+        if (!await compareHash(password, req.user?.password as string)) {
+            throw new BadRequestException("Invalid password");
+        }
+
+        const existingUser = await this.userModel.findOne({ filter: { email } });
+        if (existingUser) {
+            throw new BadRequestException("Email already exists");
+        }
+
+        const otp = nanoid(6);
+        const user = await this.userModel.findOneAndUpdate({
+            id: req.decoded?._id,
+            update: {
+                email,
+                confirmEmailOtp: otp,
+                confirmAt: undefined
+            },
+            options: { new: true }
+        });
+
+        if (!user) throw new NotFoundException("User not found");
+
+        emailEvent.emit("confirmEmail", {
+            to: email,
+            otp: otp
+        });
+
+        return successResponse({ res, message: "Email updated. Please check your new email for verification" });
+    };
+
+    sendEmailWithTags = async (req: Request, res: Response): Promise<Response> => {
+        const { to, subject, message, tags }: ISendEmailWithTagsDTO = req.body;
+        
+        const emailContent = `
+            <div>
+                <h2>${subject}</h2>
+                <p>${message}</p>
+                ${tags?.length ? `<div><strong>Tags:</strong> ${tags.join(', ')}</div>` : ''}
+                <hr>
+                <p><small>Sent from ${process.env.APPLICATION_NAME}</small></p>
+            </div>
+        `;
+
+        for (const email of to) {
+            emailEvent.emit("sendCustomEmail", {
+                to: email,
+                subject,
+                html: emailContent
+            });
+        }
+
+        return successResponse({ res, message: "Emails sent successfully" });
+    };
+
+    enableTwoFactor = async (req: Request, res: Response): Promise<Response> => {
+        const { password }: IEnableTwoFactorDTO = req.body;
+        
+        if (!await compareHash(password, req.user?.password as string)) {
+            throw new BadRequestException("Invalid password");
+        }
+
+        if (req.user?.twoFactorEnabled) {
+            throw new BadRequestException("Two-factor authentication is already enabled");
+        }
+
+        const secret = nanoid(32);
+        const otp = nanoid(6);
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+        const user = await this.userModel.findOneAndUpdate({
+            id: req.decoded?._id,
+            update: {
+                twoFactorSecret: secret,
+                twoFactorOtp: await generateHash(otp),
+                twoFactorOtpExpires: otpExpires
+            },
+            options: { new: true }
+        });
+
+        if (!user) throw new NotFoundException("User not found");
+
+        emailEvent.emit("twoFactorSetup", {
+            to: req.user?.email,
+            otp: otp
+        });
+
+        return successResponse({ res, message: "Two-factor setup initiated. Check your email for verification code" });
+    };
+
+    verifyTwoFactor = async (req: Request, res: Response): Promise<Response> => {
+        const { otp }: IVerifyTwoFactorDTO = req.body;
+        
+        if (!req.user?.twoFactorOtp || !req.user?.twoFactorOtpExpires) {
+            throw new BadRequestException("No two-factor setup in progress");
+        }
+
+        if (new Date() > req.user.twoFactorOtpExpires) {
+            throw new BadRequestException("OTP expired");
+        }
+
+        if (!await compareHash(otp, req.user.twoFactorOtp)) {
+            throw new BadRequestException("Invalid OTP");
+        }
+
+        const user = await this.userModel.findOneAndUpdate({
+            id: req.decoded?._id,
+            update: {
+                twoFactorEnabled: true,
+                $unset: { twoFactorOtp: 1, twoFactorOtpExpires: 1 }
+            },
+            options: { new: true }
+        });
+
+        if (!user) throw new NotFoundException("User not found");
+
+        return successResponse({ res, message: "Two-factor authentication enabled successfully" });
+    };
+
+    disableTwoFactor = async (req: Request, res: Response): Promise<Response> => {
+        const { password, otp }: IDisableTwoFactorDTO = req.body;
+        
+        if (!await compareHash(password, req.user?.password as string)) {
+            throw new BadRequestException("Invalid password");
+        }
+
+        if (!req.user?.twoFactorEnabled) {
+            throw new BadRequestException("Two-factor authentication is not enabled");
+        }
+
+        const verificationOtp = nanoid(6);
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+        await this.userModel.findOneAndUpdate({
+            id: req.decoded?._id,
+            update: {
+                twoFactorOtp: await generateHash(verificationOtp),
+                twoFactorOtpExpires: otpExpires
+            }
+        });
+
+        if (await compareHash(otp, await generateHash(verificationOtp))) {
+            const user = await this.userModel.findOneAndUpdate({
+                id: req.decoded?._id,
+                update: {
+                    twoFactorEnabled: false,
+                    $unset: { 
+                        twoFactorSecret: 1, 
+                        twoFactorOtp: 1, 
+                        twoFactorOtpExpires: 1 
+                    }
+                },
+                options: { new: true }
+            });
+
+            if (!user) throw new NotFoundException("User not found");
+
+            return successResponse({ res, message: "Two-factor authentication disabled successfully" });
+        } else {
+            emailEvent.emit("twoFactorDisable", {
+                to: req.user?.email,
+                otp: verificationOtp
+            });
+
+            return successResponse({ res, message: "Verification code sent to your email" });
+        }
     };
 
     //     export const updateBasicInfo = asyncHandler(async (req, res, next) => {

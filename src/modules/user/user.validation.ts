@@ -30,8 +30,53 @@ export const updateBasicInfo = {
     body:z.object({
         username:z.string().optional(),
         phone:z.string().optional(),
-        email:z.string().optional(),
-        
+        firstName:z.string().min(2).max(25).optional(),
+        lastName:z.string().min(2).max(25).optional(),
+        address:z.string().optional(),
+        gender:z.enum(["male", "female"]).optional(),
+    })
+}
+
+export const updatePassword = {
+    body: z.object({
+        oldPassword: z.string().min(6),
+        password: z.string().min(6),
+        flag: z.enum(["only", "all"]).default("only"),
+    })
+}
+
+export const updateEmail = {
+    body: z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+    })
+}
+
+export const sendEmailWithTags = {
+    body: z.object({
+        to: z.array(z.string().email()),
+        subject: z.string(),
+        message: z.string(),
+        tags: z.array(z.string()).optional(),
+    })
+}
+
+export const enableTwoFactor = {
+    body: z.object({
+        password: z.string().min(6),
+    })
+}
+
+export const verifyTwoFactor = {
+    body: z.object({
+        otp: z.string().length(6),
+    })
+}
+
+export const disableTwoFactor = {
+    body: z.object({
+        password: z.string().min(6),
+        otp: z.string().length(6),
     })
 }
 

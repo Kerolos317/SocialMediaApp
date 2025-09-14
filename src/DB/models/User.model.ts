@@ -28,8 +28,14 @@ export interface IUser {
     confirmEmailOtp?: string;
 
     password: string;
+    oldPasswords?: string[];
     resetPasswordOtp?: string;
     changeCredentialTime?: Date;
+    
+    twoFactorEnabled?: boolean;
+    twoFactorSecret?: string;
+    twoFactorOtp?: string;
+    twoFactorOtpExpires?: Date;
 
     phone?: string;
     address?: string;
@@ -72,8 +78,14 @@ const userSchema = new mongoose.Schema<IUser>(
                 return this.provider === ProviderEnum.GOOGLE ? false : true;
             },
         },
+        oldPasswords: { type: [String], default: [] },
         resetPasswordOtp: { type: String },
         changeCredentialTime: { type: Date },
+        
+        twoFactorEnabled: { type: Boolean, default: false },
+        twoFactorSecret: { type: String },
+        twoFactorOtp: { type: String },
+        twoFactorOtpExpires: { type: Date },
 
         phone: { type: String },
         address: { type: String },

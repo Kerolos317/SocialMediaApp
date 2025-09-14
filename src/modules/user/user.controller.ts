@@ -58,4 +58,46 @@ router.post(
     userService.logout
 );
 
+router.patch(
+    "/update-password",
+    authentication(),
+    validation(validators.updatePassword),
+    userService.updatePassword
+);
+
+router.patch(
+    "/update-email",
+    authentication(),
+    validation(validators.updateEmail),
+    userService.updateEmail
+);
+
+router.post(
+    "/send-email",
+    authentication(),
+    validation(validators.sendEmailWithTags),
+    userService.sendEmailWithTags
+);
+
+router.post(
+    "/enable-2fa",
+    authentication(),
+    validation(validators.enableTwoFactor),
+    userService.enableTwoFactor
+);
+
+router.post(
+    "/verify-2fa",
+    authentication(),
+    validation(validators.verifyTwoFactor),
+    userService.verifyTwoFactor
+);
+
+router.post(
+    "/disable-2fa",
+    authentication(),
+    validation(validators.disableTwoFactor),
+    userService.disableTwoFactor
+);
+
 export default router;
