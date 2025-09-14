@@ -11,9 +11,8 @@ const connection_db_1 = __importDefault(require("./DB/connection.db"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const express_rate_limit_1 = require("express-rate-limit");
-const auth_controller_1 = __importDefault(require("./modules/auth/auth.controller"));
+const modules_1 = require("./modules");
 const error_response_1 = require("./utils/response/error.response");
-const user_controller_1 = __importDefault(require("./modules/user/user.controller"));
 const s3_config_1 = require("./utils/multer/s3.config");
 const node_util_1 = require("node:util");
 const node_stream_1 = require("node:stream");
@@ -34,8 +33,9 @@ const bootstrap = async () => {
             message: `welcome to ${process.env.APPLICATION_NAME} landing page`,
         });
     });
-    app.use("/auth", auth_controller_1.default);
-    app.use("/user", user_controller_1.default);
+    app.use("/auth", modules_1.authRouter);
+    app.use("/user", modules_1.userRouter);
+    app.use("/post", modules_1.postRouter);
     app.get("/upload/pre-signed/*path", async (req, res) => {
         const { donwloadName, download = "false", expiresIn = 120, } = req.query;
         const { path } = req.params;

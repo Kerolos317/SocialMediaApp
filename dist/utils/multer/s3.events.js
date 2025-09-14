@@ -10,7 +10,7 @@ exports.s3Event.on("trackFileUpload", (data) => {
     setTimeout(async () => {
         const userModel = await new user_repository_1.UserRepository(User_model_1.UserModel);
         try {
-            const file = await (0, s3_config_1.getFile)({ Key: data.key });
+            await (0, s3_config_1.getFile)({ Key: data.key });
             await userModel.updateOne({
                 filter: { _id: data.userId },
                 update: { $unset: { tempProfileImage: 1 } },

@@ -24,3 +24,14 @@ export const hardDelete = {
     } , {error:"invalid objectId format" , path:["userId"]})
         
 };
+
+
+export const updateBasicInfo = {
+    body:z.object({
+        username:z.string().optional(),
+        phone:z.string().optional(),
+        email:z.string().optional(),
+        
+    })
+}
+

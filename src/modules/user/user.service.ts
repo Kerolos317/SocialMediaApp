@@ -28,6 +28,7 @@ import {
     NotFoundException,
 } from "../../utils/response/error.response";
 import { s3Event } from "../../utils/multer/s3.events";
+import { successResponse } from "../../utils/response/success.response";
 
 class UserService {
     private userModel = new UserRepository(UserModel);
@@ -173,21 +174,94 @@ class UserService {
     hardDelete = async (req: Request, res: Response): Promise<Response> => {
         const { userId } = req.params;
 
-
         const user = await this.userModel.deleteOne({
             filter: {
-                _id: userId ,
+                _id: userId,
                 freezedAt: { $exists: true },
             },
         });
         if (!user.deletedCount) {
             throw new NotFoundException("Fail to hardDelete account");
         }
-        await deleteFolderByPrefix({path:`users/${userId}`})
+        await deleteFolderByPrefix({ path: `users/${userId}` });
         return res.json({
             message: "Done",
         });
     };
+
+    updateBasicInfo = async (
+        req: Request,
+        res: Response
+    ): Promise<Response> => {
+        if (req.body?.password) {
+            throw new BadRequestException("In-Valid Data");
+        }
+
+        const user = await this.userModel.findOneAndUpdate({
+            id: req.decoded?._id,
+            update: req.body,
+            options: { new: true },
+        });
+
+        if (user) return successResponse({ res, data: { user } });
+        else throw new NotFoundException("user not found");
+    };
+
+    //     export const updateBasicInfo = asyncHandler(async (req, res, next) => {
+    //   if (req.body.phone) {
+    //     req.body.phone = await generateEncryption({plaintext:req.body.phone})
+    //   }
+    //   const user = await DBService.findOneAndUpdate({
+    //     model:UserModel,
+    //     filter:{
+    //       _id:req.user._id,
+    //     },
+    //     data:req.body
+
+    //   })
+    //     return user? successResponse({ res, data: { user } }):next(new Error("In-valid account", {cause:404}))
+    // });
+
+    // export const updatePassword = asyncHandler(async (req, res, next) => {
+    //   const {oldPassword , password ,flag} = req.body;
+    //   if (! await compareHash({plaintext:oldPassword , hashValue:req.user.password})) {
+    //     return next(new Error("In-valid old password"))
+    //   }
+
+    //   if (req.user.oldPasswords?.length) {
+    //     for (const hashPassword of req.user.oldPasswords) {
+    //       if ( await compareHash({plaintext:password , hashValue:hashPassword})) {
+    //     return next(new Error("this password is used before"))
+    //   }
+    //     }
+    //   }
+    //   let updatedData = {}
+    //   switch (flag) {
+    //     case logoutEnum.signoutFromAll:
+    //       updatedData.changeCredentialsTime = new Date()
+    //     case logoutEnum.signout:
+    //       await createRevokeToken({req})
+    //       status = 201
+    //       break;
+
+    //     default:
+
+    //       break;
+    //   }
+    //   const user = await DBService.findOneAndUpdate({
+    //     model:UserModel,
+    //     filter:{
+    //       _id:req.user._id,
+    //     },
+    //     data:{
+    //       password: await generateHash({plaintext:password}),
+    //       ...updatedData,
+    //       $push: {oldPasswords : req.user.password}
+    //     }
+
+    //   })
+    //     return user? successResponse({ res, data: { user } }):next(new Error("In-valid account", {cause:404}))
+    // });
 }
 
 export default new UserService();

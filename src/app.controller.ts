@@ -9,12 +9,11 @@ import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 
-import authController from "./modules/auth/auth.controller";
+import { authRouter, postRouter, userRouter } from "./modules";
 import {
     BadRequestException,
     globalErrorHandling,
 } from "./utils/response/error.response";
-import userController from "./modules/user/user.controller";
 import {
     createGetPreSignedLink,
     // deleteFile,
@@ -29,6 +28,8 @@ const writeS3WriteStreamPipe = promisify(pipeline);
 const bootstrap = async (): Promise<void> => {
     const app: Express = express();
     const port: number | string = process.env.PORT || 5000;
+
+    //DB
     await connectDB();
 
     const limiter = rateLimit({
@@ -48,8 +49,9 @@ const bootstrap = async (): Promise<void> => {
     });
 
     //sub-app-routing-modules
-    app.use("/auth", authController);
-    app.use("/user", userController);
+    app.use("/auth", authRouter);
+    app.use("/user", userRouter);
+    app.use("/post", postRouter);
 
     //test-s3
     // app.get("/test", async (req: Request, res: Response) => {
@@ -129,6 +131,21 @@ const bootstrap = async (): Promise<void> => {
 
     // global-error-handling
     app.use(globalErrorHandling);
+
+    //Hooks
+    // async function test() {
+    //     try {
+    //         const user = new UserModel({
+    //             username: "kerolos tamer",
+    //             email: `${Date.now()}@gmail.com`,
+    //             password: "123455",
+    //         });
+    //         await user.save();
+    //     } catch (error) {
+    //       console.log(error);
+    //     }
+    // }
+    // test();
 
     app.listen(3000, () => {
         console.log(`Server is running :::${port} 🚀 `);

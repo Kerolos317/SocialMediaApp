@@ -26,6 +26,12 @@ router.patch(
     userService.profileCoverImage
 );
 
+router.patch(
+    "/update-basic-info",
+    authentication(),
+    validation(validators.updateBasicInfo),
+    userService.updateBasicInfo
+);
 router.delete(
     "{/:userId}/freeze-account",
     authentication(),

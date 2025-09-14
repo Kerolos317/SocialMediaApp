@@ -16,7 +16,7 @@ import {
     NotFoundException,
 } from "../../utils/response/error.response";
 import { emailEvent } from "../../utils/email/email.event";
-import { UserRepository } from "../../DB/repository/user.repository";
+import { UserRepository } from "../../DB/repository";
 import { compareHash, generateHash } from "../../utils/security/hash.security";
 import { generateNumberOtp } from "../../utils/otp";
 import { createLoginCredentials } from "../../utils/security/token.security";
@@ -125,8 +125,8 @@ class AuthenticationService {
                     {
                         username,
                         email,
-                        password: await generateHash(password),
-                        confirmEmailOtp: await generateHash(String(otp)),
+                        password,
+                        confirmEmailOtp : `${otp}`,
                     },
                 ],
             })) || [];
@@ -135,7 +135,6 @@ class AuthenticationService {
             throw new BadRequestException("Failed to Signup user");
         }
 
-        emailEvent.emit("confirmEmail", { to: email, otp: otp });
 
         return successResponse({ res, statusCode: 201 });
     };
@@ -312,6 +311,7 @@ class AuthenticationService {
 
         return successResponse({ res });
     };
+    
 }
 
 export default new AuthenticationService();

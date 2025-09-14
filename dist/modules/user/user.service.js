@@ -7,6 +7,7 @@ const s3_config_1 = require("../../utils/multer/s3.config");
 const cloud_multer_1 = require("../../utils/multer/cloud.multer");
 const error_response_1 = require("../../utils/response/error.response");
 const s3_events_1 = require("../../utils/multer/s3.events");
+const success_response_1 = require("../../utils/response/success.response");
 class UserService {
     userModel = new user_repository_1.UserRepository(User_model_1.UserModel);
     constructor() { }
@@ -142,6 +143,20 @@ class UserService {
         return res.json({
             message: "Done",
         });
+    };
+    updateBasicInfo = async (req, res) => {
+        if (req.body?.password) {
+            throw new error_response_1.BadRequestException("In-Valid Data");
+        }
+        const user = await this.userModel.findOneAndUpdate({
+            id: req.decoded?._id,
+            update: req.body,
+            options: { new: true },
+        });
+        if (user)
+            return (0, success_response_1.successResponse)({ res, data: { user } });
+        else
+            throw new error_response_1.NotFoundException("user not found");
     };
 }
 exports.default = new UserService();
