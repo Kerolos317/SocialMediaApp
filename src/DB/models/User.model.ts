@@ -109,6 +109,7 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     {
         timestamps: true,
+        strictQuery:true,
         toJSON: { virtuals: true },
         toObject: { virtuals: true },
     }
@@ -160,6 +161,16 @@ userSchema.post("save", async function (doc, next) {
       });
     }
 });
+
+userSchema.pre(["find" ,"findOne"] ,function(next){
+    const query = this.getQuery()
+    if (query.paranoid === false) {
+      this.setQuery({...query})
+    }else{
+      this.setQuery({...query , freezedAt : {$exists : false}})
+    }
+    next();
+})
 
 export const UserModel =
     mongoose.models.User || mongoose.model<IUser>("User", userSchema);

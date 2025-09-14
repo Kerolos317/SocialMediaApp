@@ -10,6 +10,10 @@ export enum AvailabilityEnum {
     friends = "friends",
     onlyMe = "only-me",
 }
+export enum LikeActionEnum {
+    like = "like",
+    unlike = "unlike",
+}
 
 export interface IPost {
     content?: string;
@@ -70,7 +74,17 @@ const postSchema = new Schema<IPost>(
         restoredAt: { type: Date },
         restoredBy: { type: Schema.Types.ObjectId, ref: "User" },
     },
-    { timestamps: true }
+    { timestamps: true, strictQuery: true }
 );
+
+postSchema.pre(["findOneAndUpdate", "updateOne"], function (next) {
+    const query = this.getQuery();
+    if (query.paranoid === false) {
+        this.setQuery({ ...query });
+    } else {
+        this.setQuery({ ...query, freezedAt: { $exists: false } });
+    }
+    next();
+});
 
 export const PostModel = models.Post || model<IPost>("Post", postSchema);

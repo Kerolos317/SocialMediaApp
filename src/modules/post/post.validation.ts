@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
     AllowCommentsEnum,
     AvailabilityEnum,
+    LikeActionEnum,
 } from "../../DB/models/Post.model";
 import { generalFields } from "../../middleware/validation.middleware";
 import { fileValidation } from "../../utils/multer/cloud.multer";
@@ -44,3 +45,13 @@ export const createPost = {
             }
         }),
 };
+
+export const likePost = {
+  params:z.strictObject({
+    postId:generalFields.id
+  }),
+
+  query:z.strictObject({
+    action:z.enum(LikeActionEnum).default(LikeActionEnum.like)
+  })
+}

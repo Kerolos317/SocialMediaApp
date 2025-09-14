@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authentication } from "../../middleware/authentication.middleware";
 import postService from "./post.service";
-import * as validators from "./post.validation"
+import * as validators from "./post.validation";
 import {
     cloudFileUpload,
     fileValidation,
@@ -10,6 +10,12 @@ import { validation } from "../../middleware/validation.middleware";
 
 const router = Router();
 
+router.patch(
+    "/:postId",
+    authentication(),
+    validation(validators.likePost),
+    postService.likePost
+);
 router.post(
     "/create-post",
     authentication(),
