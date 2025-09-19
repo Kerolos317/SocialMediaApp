@@ -13,6 +13,7 @@ import { endpoint } from "./user.authorization";
 const router = Router();
 
 router.get("/", authentication(), userService.profile);
+router.get("/dashboard", authorization(endpoint.dashboard), userService.dashboard);
 
 router.patch("/profile-image", authentication(), userService.profileImage);
 

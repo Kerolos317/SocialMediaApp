@@ -10,6 +10,7 @@ export enum GenderEnum {
 export enum RoleEnum {
     User = "user",
     Admin = "admin",
+    superAdmin = "super-admin"
 }
 
 export enum ProviderEnum {
@@ -31,7 +32,7 @@ export interface IUser {
     oldPasswords?: string[];
     resetPasswordOtp?: string;
     changeCredentialTime?: Date;
-    
+
     twoFactorEnabled?: boolean;
     twoFactorSecret?: string;
     twoFactorOtp?: string;
@@ -50,8 +51,10 @@ export interface IUser {
 
     freezedAt?: Date;
     freezedBy?: Types.ObjectId;
+
     restoredAt?: Date;
     restoredBy?: Types.ObjectId;
+    friends?: Types.ObjectId[];
 
     createdAt: Date;
     updatedAt?: Date;
@@ -81,7 +84,7 @@ const userSchema = new mongoose.Schema<IUser>(
         oldPasswords: { type: [String], default: [] },
         resetPasswordOtp: { type: String },
         changeCredentialTime: { type: Date },
-        
+
         twoFactorEnabled: { type: Boolean, default: false },
         twoFactorSecret: { type: String },
         twoFactorOtp: { type: String },
@@ -106,10 +109,11 @@ const userSchema = new mongoose.Schema<IUser>(
         freezedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         restoredAt: { type: Date },
         restoredBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     },
     {
         timestamps: true,
-        strictQuery:true,
+        strictQuery: true,
         toJSON: { virtuals: true },
         toObject: { virtuals: true },
     }
@@ -154,23 +158,22 @@ userSchema.post("save", async function (doc, next) {
         confirmEmailPlainOtp?: string;
     };
     if (that.wasNew && that.confirmEmailPlainOtp) {
-      
-      emailEvent.emit("confirmEmail", {
-          to: this.email,
-          otp: that.confirmEmailPlainOtp,
-      });
+        emailEvent.emit("confirmEmail", {
+            to: this.email,
+            otp: that.confirmEmailPlainOtp,
+        });
     }
 });
 
-userSchema.pre(["find" ,"findOne"] ,function(next){
-    const query = this.getQuery()
+userSchema.pre(["find", "findOne"], function (next) {
+    const query = this.getQuery();
     if (query.paranoid === false) {
-      this.setQuery({...query})
-    }else{
-      this.setQuery({...query , freezedAt : {$exists : false}})
+        this.setQuery({ ...query });
+    } else {
+        this.setQuery({ ...query, freezedAt: { $exists: false } });
     }
     next();
-})
+});
 
 export const UserModel =
     mongoose.models.User || mongoose.model<IUser>("User", userSchema);

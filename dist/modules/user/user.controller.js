@@ -46,6 +46,7 @@ const cloud_multer_1 = require("../../utils/multer/cloud.multer");
 const user_authorization_1 = require("./user.authorization");
 const router = (0, express_1.Router)();
 router.get("/", (0, authentication_middleware_1.authentication)(), user_service_1.default.profile);
+router.get("/dashboard", (0, authentication_middleware_1.authorization)(user_authorization_1.endpoint.dashboard), user_service_1.default.dashboard);
 router.patch("/profile-image", (0, authentication_middleware_1.authentication)(), user_service_1.default.profileImage);
 router.patch("/profile-cover-image", (0, authentication_middleware_1.authentication)(), (0, cloud_multer_1.cloudFileUpload)({
     validation: cloud_multer_1.fileValidation.image,
@@ -56,4 +57,10 @@ router.delete("{/:userId}/freeze-account", (0, authentication_middleware_1.authe
 router.delete("/:userId", (0, authentication_middleware_1.authorization)(user_authorization_1.endpoint.hardDelete), (0, validation_middleware_1.validation)(validators.hardDelete), user_service_1.default.hardDelete);
 router.post("/refresh-token", (0, authentication_middleware_1.authentication)(token_security_1.TokenEnum.refresh), user_service_1.default.refreshToken);
 router.post("/logout", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.logout), user_service_1.default.logout);
+router.patch("/update-password", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.updatePassword), user_service_1.default.updatePassword);
+router.patch("/update-email", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.updateEmail), user_service_1.default.updateEmail);
+router.post("/send-email", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.sendEmailWithTags), user_service_1.default.sendEmailWithTags);
+router.post("/enable-2fa", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.enableTwoFactor), user_service_1.default.enableTwoFactor);
+router.post("/verify-2fa", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.verifyTwoFactor), user_service_1.default.verifyTwoFactor);
+router.post("/disable-2fa", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.disableTwoFactor), user_service_1.default.disableTwoFactor);
 exports.default = router;

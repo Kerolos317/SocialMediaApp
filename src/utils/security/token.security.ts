@@ -50,6 +50,7 @@ export const detectSignatureLevel = async (
     let signatureLevel: SignatureLevelEnum = SignatureLevelEnum.Bearer;
     switch (role) {
         case RoleEnum.Admin:
+        case RoleEnum.superAdmin:
             signatureLevel = SignatureLevelEnum.System;
             break;
         default:

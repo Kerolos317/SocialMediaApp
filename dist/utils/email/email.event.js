@@ -23,3 +23,30 @@ exports.emailEvent.on("resetPassword", async (data) => {
         console.log(`Fail to send email to ${data.otp}`);
     });
 });
+exports.emailEvent.on("sendCustomEmail", async (data) => {
+    await (0, send_email_js_1.sendEmail)({
+        to: data.to,
+        subject: data.subject,
+        html: data.html,
+    }).catch((error) => {
+        console.log(`Fail to send custom email to ${data.to}`);
+    });
+});
+exports.emailEvent.on("twoFactorSetup", async (data) => {
+    await (0, send_email_js_1.sendEmail)({
+        to: data.to,
+        subject: "Two-Factor Authentication Setup",
+        html: (0, verfiy_email_templates_js_1.verifyEmailTemplate)({ otp: data.otp }),
+    }).catch((error) => {
+        console.log(`Fail to send 2FA setup email to ${data.to}`);
+    });
+});
+exports.emailEvent.on("twoFactorDisable", async (data) => {
+    await (0, send_email_js_1.sendEmail)({
+        to: data.to,
+        subject: "Disable Two-Factor Authentication",
+        html: (0, verfiy_email_templates_js_1.verifyEmailTemplate)({ otp: data.otp }),
+    }).catch((error) => {
+        console.log(`Fail to send 2FA disable email to ${data.to}`);
+    });
+});

@@ -7,17 +7,30 @@ import {
     fileValidation,
 } from "../../utils/multer/cloud.multer";
 import { validation } from "../../middleware/validation.middleware";
+import { commentRouter } from "../comment";
 
 const router = Router();
 
+router.use("/:postId/comment", commentRouter);
+
 router.patch(
-    "/:postId",
+    "/:postId/like",
     authentication(),
     validation(validators.likePost),
     postService.likePost
 );
+
+router.get("/", authentication(), postService.postList);
+
+router.patch(
+    "/:postId",
+    authentication(),
+    validation(validators.updatePost),
+    postService.updatePost
+);
+
 router.post(
-    "/create-post",
+    "/",
     authentication(),
     cloudFileUpload({ validation: fileValidation.image }).array(
         "attachments",

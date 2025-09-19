@@ -16,6 +16,7 @@ var RoleEnum;
 (function (RoleEnum) {
     RoleEnum["User"] = "user";
     RoleEnum["Admin"] = "admin";
+    RoleEnum["superAdmin"] = "super-admin";
 })(RoleEnum || (exports.RoleEnum = RoleEnum = {}));
 var ProviderEnum;
 (function (ProviderEnum) {
@@ -40,8 +41,13 @@ const userSchema = new mongoose_1.default.Schema({
             return this.provider === ProviderEnum.GOOGLE ? false : true;
         },
     },
+    oldPasswords: { type: [String], default: [] },
     resetPasswordOtp: { type: String },
     changeCredentialTime: { type: Date },
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String },
+    twoFactorOtp: { type: String },
+    twoFactorOtpExpires: { type: Date },
     phone: { type: String },
     address: { type: String },
     profileImage: { type: String },
@@ -58,8 +64,10 @@ const userSchema = new mongoose_1.default.Schema({
     freezedBy: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" },
     restoredAt: { type: Date },
     restoredBy: { type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" },
+    friends: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: "User" }],
 }, {
     timestamps: true,
+    strictQuery: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
 });
@@ -91,5 +99,15 @@ userSchema.post("save", async function (doc, next) {
             otp: that.confirmEmailPlainOtp,
         });
     }
+});
+userSchema.pre(["find", "findOne"], function (next) {
+    const query = this.getQuery();
+    if (query.paranoid === false) {
+        this.setQuery({ ...query });
+    }
+    else {
+        this.setQuery({ ...query, freezedAt: { $exists: false } });
+    }
+    next();
 });
 exports.UserModel = mongoose_1.default.models.User || mongoose_1.default.model("User", userSchema);

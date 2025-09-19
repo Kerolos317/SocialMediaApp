@@ -54,6 +54,15 @@ class UserService {
             },
         });
     };
+    dashboard = async (req: Request, res: Response): Promise<Response> => {
+        return res.json({
+            message: "Done",
+            data: {
+                user: req.user?._id,
+                decoded: req.decoded?.iat,
+            },
+        });
+    };
 
     profileImage = async (req: Request, res: Response): Promise<Response> => {
         const {
@@ -65,7 +74,7 @@ class UserService {
             originalname,
             path: `users/${req.decoded?._id}`,
         });
-        const user = await this.userModel.findOneAndUpdate({
+        const user = await this.userModel.findByIdAndUpdate({
             id: req.decoded?._id,
             update: {
                 profileImage: key,
@@ -101,7 +110,7 @@ class UserService {
             path: `users/${req.decoded?._id}/cover`,
             useLarge: true,
         });
-        const user = await this.userModel.findOneAndUpdate({
+        const user = await this.userModel.findByIdAndUpdate({
             id: req.user?._id as Types.ObjectId,
             update: { coverImage: urls },
             options: { new: false },
@@ -208,7 +217,7 @@ class UserService {
             throw new BadRequestException("In-Valid Data");
         }
 
-        const user = await this.userModel.findOneAndUpdate({
+        const user = await this.userModel.findByIdAndUpdate({
             id: req.decoded?._id,
             update: req.body,
             options: { new: true },
@@ -246,7 +255,7 @@ class UserService {
                 break;
         }
 
-        const user = await this.userModel.findOneAndUpdate({
+        const user = await this.userModel.findByIdAndUpdate({
             id: req.decoded?._id,
             update: {
                 password: await generateHash(password),
@@ -274,7 +283,7 @@ class UserService {
         }
 
         const otp = nanoid(6);
-        const user = await this.userModel.findOneAndUpdate({
+        const user = await this.userModel.findByIdAndUpdate({
             id: req.decoded?._id,
             update: {
                 email,
@@ -333,7 +342,7 @@ class UserService {
         const otp = nanoid(6);
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-        const user = await this.userModel.findOneAndUpdate({
+        const user = await this.userModel.findByIdAndUpdate({
             id: req.decoded?._id,
             update: {
                 twoFactorSecret: secret,
@@ -368,7 +377,7 @@ class UserService {
             throw new BadRequestException("Invalid OTP");
         }
 
-        const user = await this.userModel.findOneAndUpdate({
+        const user = await this.userModel.findByIdAndUpdate({
             id: req.decoded?._id,
             update: {
                 twoFactorEnabled: true,
@@ -396,7 +405,7 @@ class UserService {
         const verificationOtp = nanoid(6);
         const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-        await this.userModel.findOneAndUpdate({
+        await this.userModel.findByIdAndUpdate({
             id: req.decoded?._id,
             update: {
                 twoFactorOtp: await generateHash(verificationOtp),
@@ -405,7 +414,7 @@ class UserService {
         });
 
         if (await compareHash(otp, await generateHash(verificationOtp))) {
-            const user = await this.userModel.findOneAndUpdate({
+            const user = await this.userModel.findByIdAndUpdate({
                 id: req.decoded?._id,
                 update: {
                     twoFactorEnabled: false,
